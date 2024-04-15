@@ -1,67 +1,68 @@
 package ru.zzemlyanaya.pulsepower.auth.presentation.viewmodel
 
-import androidx.compose.runtime.*
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import ru.zzemlyanaya.pulsepower.app.navigation.*
 import ru.zzemlyanaya.pulsepower.auth.domain.interactor.AuthInteractor
-import ru.zzemlyanaya.pulsepower.auth.presentation.model.AuthUiState
-import ru.zzemlyanaya.pulsepower.auth.presentation.model.intent.AuthIntent
-import ru.zzemlyanaya.pulsepower.core.model.BaseIntent
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.AuthContract
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
+import ru.zzemlyanaya.pulsepower.core.http.AuthCredentialsCache
 import ru.zzemlyanaya.pulsepower.core.viewModel.BaseViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val interactor: AuthInteractor,
+    private val authCredentialsCache: AuthCredentialsCache,
     private val router: NavigationRouter
-) : BaseViewModel<AuthIntent>(router) {
+) : BaseViewModel<AuthContract.UiState, AuthContract.Intent>(router) {
 
-    private val mutableUiState = mutableStateOf(AuthUiState())
-    val authUiState: State<AuthUiState> = mutableUiState
-
-    init {
-        handleIntent()
-    }
+    override fun getInitialState() = AuthContract.UiState()
 
     override fun handleIntent(intent: BaseIntent) {
         when (intent) {
-            is AuthIntent.UpdatePhone -> updatePhone(intent.phone)
-            is AuthIntent.SignInClick -> onSingInClick()
+            is AuthContract.Intent.UpdatePhone -> updatePhone(intent.phone)
+            is AuthContract.Intent.SignIn -> onSingInClick(getUiState().phone)
             else -> super.handleIntent(intent)
         }
     }
 
     private fun updatePhone(input: String) {
-        mutableUiState.value = mutableUiState.value.copy(phone = input)
-        mutableUiState.value = mutableUiState.value.copy(phoneError = null)
+        updateDataState { it.copy(phone = input, phoneError = null) }
     }
 
-    private fun onSingInClick() {
-        if (authUiState.value.phone.length != 11) {
-            mutableUiState.value = mutableUiState.value.copy(phoneError = "Phone is not valid")
+    private fun onSingInClick(phone: String) {
+        if (phone.length != 10) {
+            updateDataState { it.copy(phoneError = "Phone is not valid") }
         } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                _baseUiState.value = _baseUiState.value.copy(isLoading = true)
-                val result = interactor.signIn(authUiState.value.phone)
+            ioScope.launch {
+                showLoading()
+                val result = interactor.signIn(phone)
 
                 if (result.isSuccessful) {
-                    _baseUiState.value = _baseUiState.value.copy(isLoading = false)
                     result.headers()["X-AuthSid"]?.let {
                         handleAuthSid(it)
-                        router.navigateTo(AuthDirections.phoneConfirm)
+
+                        ioScope.launch {
+                            val code = interactor.getConfirmCode()
+                            if (code.isSuccessful) {
+                                result.headers()["X-AuthSid"]?.let { sid -> handleAuthSid(sid) }
+                                router.navigateTo(AuthDirections.phoneConfirm(code.body().orEmpty()))
+                            } else {
+                                showError(code.message())
+                            }
+                        }
                     }
-                    router.navigateTo(AuthDirections.phoneConfirm)
                 } else {
-                    _baseUiState.value = _baseUiState.value.copy(error = result.message())
+                    showError(result.message())
                 }
             }
         }
     }
 
     private fun handleAuthSid(sid: String) {
+        authCredentialsCache.authSid = sid
     }
 }

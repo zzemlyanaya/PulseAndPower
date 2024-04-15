@@ -17,3 +17,4 @@ val mate_black_container = Color(0x26D9D9D9)
 val mate_black_variant = Color(0xFF303741)
 
 val darkGradient = Brush.horizontalGradient(listOf(blue_345599, blue_68a4ff))
+val lightGradient = Brush.radialGradient(listOf(blue_68a4ff, purple_9999ff))

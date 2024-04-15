@@ -1,8 +1,8 @@
 package ru.zzemlyanaya.pulsepower.placeSelect.presentation.ui
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,7 +10,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -19,74 +18,76 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.*
-import ru.zzemlyanaya.pulsepower.placeSelect.model.*
+import ru.zzemlyanaya.pulsepower.core.ui.BaseScreen
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.model.CityItemUiModel
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.model.PlaceUiModel
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.model.contract.PlaceSelectContract
 import ru.zzemlyanaya.pulsepower.placeSelect.presentation.viewModel.PlaceSelectViewModel
 import ru.zzemlyanaya.pulsepower.uikit.BottomButton
 import ru.zzemlyanaya.pulsepower.uikit.Toolbar
 
 @Composable
-fun PlaceSelectScreen(
-    modifier: Modifier = Modifier,
-    viewModel: PlaceSelectViewModel = viewModel()
-) {
-    PlaceSelectScreen(
+fun PlaceSelectScreen(modifier: Modifier = Modifier) {
+    val viewModel = hiltViewModel<PlaceSelectViewModel>()
+
+    BaseScreen<PlaceSelectContract.UiState>(
         modifier = modifier,
-        title = viewModel.placesUiState.value.title,
-        isError = viewModel.placesUiState.value.isError,
-        cities = viewModel.placesUiState.value.cities,
-        onCityClick = viewModel::onCityClick,
-        onPlaceClick = viewModel::onPlaceClick,
-        onBack = viewModel::back
+        uiFlow = viewModel.screenState,
+        sendIntent = viewModel::sendIntent,
+        loadingContent = { mModifier, uiState, sendIntent -> PlaceSelectScreen(mModifier, uiState, sendIntent, true) },
+        dataContent = { mModifier, uiState, sendIntent -> PlaceSelectScreen(mModifier, uiState, sendIntent) }
     )
 }
 
 @Composable
 fun PlaceSelectScreen(
     modifier: Modifier = Modifier,
-    @StringRes title: Int,
-    isError: Boolean,
-    cities: List<CityItemUiModel>,
-    onCityClick: (CityItemUiModel) -> Unit,
-    onPlaceClick: (String, String) -> Unit,
-    onBack: () -> Unit
+    uiState: PlaceSelectContract.UiState,
+    sendIntent: (BaseIntent) -> Unit,
+    showLoading: Boolean = false
 ) {
-    Surface {
-        Column(
-            modifier = modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Toolbar(title = stringResource(id = title), onBackPressed = onBack)
+    if (showLoading) {
+        Box(modifier = Modifier.fillMaxSize().background(mate_black_container)) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+    }
 
-                Text(
-                    modifier = Modifier.padding(top = 12.dp),
-                    text = stringResource(id = R.string.choose_up_to_5),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isError) MaterialTheme.colorScheme.error else white_caption
-                )
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Toolbar(title = stringResource(id = uiState.title), onBackPressed = { sendIntent(BaseIntent.Back) })
 
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    cities.forEach { city ->
-                        CityItem(
-                            modifier = modifier.fillMaxWidth(),
-                            city = city,
-                            hasSelected = city.hasSelected,
-                            isOpen = city.isOpen,
-                            onCityClick = onCityClick,
-                            onPlaceClick = onPlaceClick
-                        )
-                    }
+            Text(
+                modifier = Modifier.padding(top = 12.dp),
+                text = stringResource(id = R.string.choose_up_to_5),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (uiState.isError) MaterialTheme.colorScheme.error else white_caption
+            )
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                uiState.cities.forEach { city ->
+                    CityItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        city = city,
+                        hasSelected = city.hasSelected,
+                        isOpen = city.isOpen,
+                        onCityClick = { sendIntent(PlaceSelectContract.Intent.CityClick(it)) },
+                        onPlaceClick = { sendIntent(PlaceSelectContract.Intent.PlaceClick(city.name, it)) }
+                    )
                 }
             }
-
-            BottomButton(
-                text = stringResource(id = R.string.ready),
-                onClick = onBack
-            )
         }
+
+        BottomButton(
+            text = stringResource(id = R.string.ready),
+            onClick = { sendIntent(BaseIntent.Back) }
+        )
     }
 }
 
@@ -97,43 +98,45 @@ fun CityItem(
     hasSelected: Boolean,
     isOpen: Boolean,
     onCityClick: (CityItemUiModel) -> Unit,
-    onPlaceClick: (String, String) -> Unit
+    onPlaceClick: (String) -> Unit
 ) {
     val rotation = animateFloatAsState(targetValue = if (isOpen) 90f else 0f, label = "arrow animation")
 
-    Surface(modifier = modifier) {
-        Column {
-            Row(
-                modifier = modifier.fillMaxWidth().clickable { onCityClick(city) }.padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
-            ) {
-                Text(
-                    text = city.name,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (hasSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                )
+    Column(modifier) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable { onCityClick(city) }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
+        ) {
+            Text(
+                text = city.name,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (hasSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
 
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = "Arrow right",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(40.dp).graphicsLayer(rotationZ = rotation.value)
-                )
-            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = "Arrow right",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .size(40.dp)
+                    .graphicsLayer(rotationZ = rotation.value)
+            )
+        }
 
-            AnimatedVisibility(visible = isOpen) {
-                Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    city.places.forEach { place ->
-                        PlaceItem(
-                            modifier = modifier,
-                            place = place,
-                            cityName = city.name,
-                            isSelected = place.isSelected,
-                            onClick = onPlaceClick
-                        )
-                    }
+        AnimatedVisibility(visible = isOpen) {
+            Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                city.places.forEach { place ->
+                    PlaceItem(
+                        modifier = modifier,
+                        place = place,
+                        isSelected = place.isSelected,
+                        onClick = { onPlaceClick(place.id) }
+                    )
                 }
             }
         }
@@ -143,23 +146,20 @@ fun CityItem(
 @Composable
 fun PlaceItem(
     modifier: Modifier = Modifier,
-    cityName: String,
     place: PlaceUiModel,
     isSelected: Boolean,
-    onClick: (String, String) -> Unit
+    onClick: () -> Unit
 ) {
     Text(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {  onClick(cityName, place.id) }
+            .clickable { onClick() }
             .padding(vertical = 8.dp),
         text = place.name,
         style = MaterialTheme.typography.bodyMedium,
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     )
-
 }
-
 
 @Composable
 fun PlaceSelectInput(
@@ -183,7 +183,7 @@ fun PlaceSelectInput(
             }
 
             Row(
-                verticalAlignment = Alignment.Bottom,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
 
@@ -194,8 +194,8 @@ fun PlaceSelectInput(
                 )
 
                 Text(
-                    modifier = Modifier.padding(start = 2.dp),
-                    text = error ?: text,
+                    modifier = Modifier.padding(start = 6.dp),
+                    text = error ?: text.takeUnless { it.isBlank() } ?: stringResource(id = R.string.place_select_prompt),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Start,
@@ -213,10 +213,9 @@ fun PlaceItemPreview() {
         var isSelected by remember { mutableStateOf(false) }
 
         PlaceItem(
-            cityName = "Ад",
             place = PlaceUiModel("id1", "Ад, Power&Pulse Центр", false),
             isSelected = isSelected,
-            onClick = { _, _ -> isSelected = !isSelected }
+            onClick = { isSelected = !isSelected }
         )
     }
 }
@@ -231,16 +230,16 @@ fun CityItemPreview() {
             city = CityItemUiModel(
                 "Ад",
                 listOf(
-                        PlaceUiModel("x1", "Power&Pulse Центр", false),
-                        PlaceUiModel("x2", "Power&Pulse Дворцовая площадь", false ),
-                        PlaceUiModel("x3", "Power&Pulse Котлы", false)
-                    ),
+                    PlaceUiModel("x1", "Power&Pulse Центр", false),
+                    PlaceUiModel("x2", "Power&Pulse Дворцовая площадь", false),
+                    PlaceUiModel("x3", "Power&Pulse Котлы", false)
+                ),
                 false
             ),
             hasSelected = false,
             isOpen = isOpen,
             onCityClick = { isOpen = !isOpen },
-            onPlaceClick = { _, _ -> }
+            onPlaceClick = { }
         )
     }
 }
@@ -252,12 +251,17 @@ fun PlaceSelectInputPreview() {
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             PlaceSelectInput(
                 title = "Любимые места:",
-                text = "Ад, Power&Pulse Центр и ещё 1 филиал",
+                text = "Ад, Power&Pulse Центр и ещё 1 филиал asufdhsfugasdufgasufsDUFHidus",
                 onClick = {}
             )
 
             PlaceSelectInput(
                 text = "Ад, Power&Pulse Центр",
+                onClick = {}
+            )
+
+            PlaceSelectInput(
+                text = "",
                 onClick = {}
             )
 
@@ -274,13 +278,14 @@ fun PlaceSelectInputPreview() {
 @Composable
 fun PlaceSelectScreenPreview() {
     PulsePowerTheme {
-        PlaceSelectScreen(
-            title = R.string.places_select,
-            isError = false,
-            cities = PlaceSelectViewModel.getData(),
-            onCityClick = {},
-            onPlaceClick = {_, _ -> },
-            onBack = {}
-        )
+        PlaceSelectScreen(Modifier.fillMaxSize(), PlaceSelectContract.UiState(), {})
+    }
+}
+
+@Preview(device = Devices.PIXEL_4A, heightDp = 750)
+@Composable
+fun PlaceSelectScreenLoadingPreview() {
+    PulsePowerTheme {
+        PlaceSelectScreen(Modifier.fillMaxSize(), PlaceSelectContract.UiState(), {}, true)
     }
 }

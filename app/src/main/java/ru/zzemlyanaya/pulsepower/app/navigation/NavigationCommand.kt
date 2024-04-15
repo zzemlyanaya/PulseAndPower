@@ -1,8 +1,8 @@
 package ru.zzemlyanaya.pulsepower.app.navigation
 
-import androidx.navigation.NamedNavArgument
+import java.io.Serializable
 
-interface NavigationCommand {
-    val arguments: List<NamedNavArgument>
-    val destination: String
+abstract class NavigationCommand {
+    open val args: List<Any> = emptyList()
+    abstract val destination: String
 }

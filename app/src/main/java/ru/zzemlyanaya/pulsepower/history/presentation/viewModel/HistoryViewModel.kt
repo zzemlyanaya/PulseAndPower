@@ -1,85 +1,39 @@
 package ru.zzemlyanaya.pulsepower.history.presentation.viewModel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.text.AnnotatedString
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import ru.zzemlyanaya.pulsepower.app.navigation.NavigationRouter
-import ru.zzemlyanaya.pulsepower.app.theme.purple_9999ff
-import ru.zzemlyanaya.pulsepower.app.theme.white
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.core.viewModel.BaseViewModel
-import ru.zzemlyanaya.pulsepower.history.presentation.model.HistoryUiState
-import ru.zzemlyanaya.pulsepower.history.presentation.model.SubscriptionUiModel
+import ru.zzemlyanaya.pulsepower.history.presentation.mapping.MembershipUiModelMapper
+import ru.zzemlyanaya.pulsepower.history.presentation.model.contract.HistoryContract
+import ru.zzemlyanaya.pulsepower.home.domain.interactor.StoreInteractor
 import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
+    private val interactor: StoreInteractor,
+    private val mapper: MembershipUiModelMapper,
     private val router: NavigationRouter
-) : BaseViewModel(router) {
+) : BaseViewModel<HistoryContract.UiState, HistoryContract.Intent>(router) {
 
-    private val mutableUiState = mutableStateOf(HistoryUiState())
-    val historyUiState: State<HistoryUiState> = mutableUiState
+    override fun getInitialState() = HistoryContract.UiState()
 
     init {
-        mutableUiState.value = mutableUiState.value.copy(items = getData())
+        ioScope.launch {
+            showLoading()
+            val result = interactor.getAllMemberships()
+            updateAndSetDataState { it.copy(items = mapper.map(result)) }
+        }
     }
 
-    companion object {
-        fun getData() = listOf(
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца до 11.06.2024"),
-                pulseColor = purple_9999ff.copy(alpha = 0.6f),
-                onRepeat = {},
-                isRepeatable = false
-            ),
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.3f),
-                onRepeat = {},
-                isRepeatable = true
-            ),
-            SubscriptionUiModel(
-                description = AnnotatedString("Индивидуальные утренние занятия"),
-                period = AnnotatedString("На 3 месяца"),
-                pulseColor = white.copy(alpha = 0.2f),
-                onRepeat = {},
-                isRepeatable = true
-            )
-        )
+    override fun handleIntent(intent: BaseIntent) {
+        if (intent is HistoryContract.Intent.RepeatSubscription) repeatSubscription(intent.id)
+        super.handleIntent(intent)
+    }
+
+    private fun repeatSubscription(id: String) {
+        val item = getUiState().items.first { it.id == id }
+        // TODO repeat
     }
 }

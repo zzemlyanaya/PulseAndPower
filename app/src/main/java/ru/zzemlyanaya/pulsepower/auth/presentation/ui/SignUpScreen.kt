@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -14,17 +14,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.SignUpContract
 import ru.zzemlyanaya.pulsepower.auth.presentation.viewmodel.SignUpViewModel
+import ru.zzemlyanaya.pulsepower.core.ui.BaseScreen
 import ru.zzemlyanaya.pulsepower.placeSelect.presentation.ui.PlaceSelectInput
 import ru.zzemlyanaya.pulsepower.uikit.*
 
 @Composable
+fun SignUpScreen(modifier: Modifier = Modifier) {
+    val viewModel = hiltViewModel<SignUpViewModel>()
+
+    BaseScreen<SignUpContract.UiState>(
+        modifier = modifier,
+        uiFlow = viewModel.screenState,
+        sendIntent = viewModel::sendIntent,
+        loadingContent = { mModifier, uiState, sendEvent -> SignUpScreen(mModifier, uiState, sendEvent, true) },
+        dataContent = { mModifier, uiState, sendEvent -> SignUpScreen(mModifier, uiState, sendEvent) }
+    )
+
+}
+
+@Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    viewModel: SignUpViewModel = viewModel()
+    uiState: SignUpContract.UiState,
+    sendIntent: (SignUpContract.Intent) -> Unit,
+    showLoading: Boolean = false
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -43,13 +61,13 @@ fun SignUpScreen(
             )
 
             OutlinedTextInput(
-                value = viewModel.signUpUiState.value.name,
-                onValueChanged = { viewModel.updateName(it) },
+                value = uiState.name,
+                onValueChanged = { sendIntent(SignUpContract.Intent.UpdateName(it)) },
                 placeholder = stringResource(id = R.string.name),
-                error = viewModel.signUpUiState.value.nameError,
-                modifier = modifier.fillMaxWidth(),
+                error = uiState.nameError,
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
                     autoCorrect = false
                 ),
@@ -57,13 +75,13 @@ fun SignUpScreen(
             )
 
             OutlinedTextInput(
-                value = viewModel.signUpUiState.value.surname,
-                onValueChanged = { viewModel.updateSurname(it) },
+                value = uiState.surname,
+                onValueChanged = { sendIntent(SignUpContract.Intent.UpdateSurname(it)) },
                 placeholder = stringResource(id = R.string.surname),
-                error = viewModel.signUpUiState.value.surnameError,
-                modifier = modifier.fillMaxWidth(),
+                error = uiState.surnameError,
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
                     autoCorrect = false
                 ),
@@ -71,13 +89,13 @@ fun SignUpScreen(
             )
 
             OutlinedTextInput(
-                value = viewModel.signUpUiState.value.patronymic,
-                onValueChanged = { viewModel.updatePatronymic(it) },
+                value = uiState.patronymic,
+                onValueChanged = { sendIntent(SignUpContract.Intent.UpdatePatronymic(it)) },
                 placeholder = stringResource(id = R.string.patronymic),
-                error = viewModel.signUpUiState.value.patronymicError,
-                modifier = modifier.fillMaxWidth(),
+                error = uiState.patronymicError,
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
                     autoCorrect = false
                 ),
@@ -86,15 +104,25 @@ fun SignUpScreen(
 
             PlaceSelectInput(
                 title = stringResource(id = R.string.favourite_places),
-                text = viewModel.signUpUiState.value.favouritePlaces,
-                onClick = viewModel::onSelectPlaces
+                text = uiState.favouritePlaces,
+                onClick = { sendIntent(SignUpContract.Intent.SelectPlaces) }
             )
         }
 
-        BottomButton(
-            text = stringResource(id = R.string.ready),
-            onClick = viewModel::onSignUpClick
-        )
+
+        if (showLoading) {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+            ) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        } else {
+            BottomButton(
+                text = stringResource(id = R.string.ready),
+                onClick = { sendIntent(SignUpContract.Intent.SignUp) }
+            )
+        }
     }
 }
 
@@ -102,6 +130,10 @@ fun SignUpScreen(
 @Composable
 fun SignUpScreenPreview() {
     PulsePowerTheme {
-        SignUpScreen()
+        SignUpScreen(
+            modifier = Modifier,
+            uiState = SignUpContract.UiState(),
+            sendIntent = {}
+        )
     }
 }

@@ -1,12 +1,22 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package ru.zzemlyanaya.pulsepower.home.presentation.ui
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -16,51 +26,73 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.*
+import ru.zzemlyanaya.pulsepower.core.ui.BaseScreen
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.history.domain.model.*
 import ru.zzemlyanaya.pulsepower.home.presentation.model.OptionUiModel
+import ru.zzemlyanaya.pulsepower.home.presentation.model.PaymentState
+import ru.zzemlyanaya.pulsepower.home.presentation.model.contract.HomeContract
 import ru.zzemlyanaya.pulsepower.home.presentation.viewModel.HomeViewModel
 import ru.zzemlyanaya.pulsepower.placeSelect.presentation.ui.PlaceSelectInput
 import ru.zzemlyanaya.pulsepower.uikit.*
 
 @Composable
+fun HomeScreen(modifier: Modifier = Modifier) {
+    val viewModel = hiltViewModel<HomeViewModel>()
+
+    BaseScreen<HomeContract.UiState>(
+        modifier = modifier,
+        uiFlow = viewModel.screenState,
+        sendIntent = viewModel::sendIntent,
+        dataContent = { mModifier, uiState, sendIntent -> HomeScreen(mModifier, uiState, sendIntent) }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = viewModel()
+    modifier: Modifier,
+    uiState: HomeContract.UiState,
+    sendIntent: (BaseIntent) -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState()
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(vertical = 24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        if (uiState.paymentState != PaymentState.NONE) {
+            PaymentStateDialog(state = uiState.paymentState, sheetState = sheetState) { sendIntent(HomeContract.Intent.ClosePaymentDialog) }
+        }
+
         Column(
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(36.dp)
         ) {
-            HelloView(modifier = Modifier.padding(horizontal = 16.dp), "Вергилий", {})
+            HelloView(modifier = Modifier.padding(horizontal = 16.dp), uiState.userName) {
+                sendIntent(HomeContract.Intent.OpenProfile)
+            }
 
-            CurrentMembershipSection()
+            CurrentMembershipSection(uiState.currentMembership) { sendIntent(HomeContract.Intent.OpenHistory) }
 
             MembershipBuilderSection(
-                modifier = modifier.fillMaxWidth(),
-                timeOfTheDayOption = viewModel.homeUiState.value.timeOfTheDayOption,
-                typeOptions = viewModel.homeUiState.value.typeOptions,
-                durationOptions = viewModel.homeUiState.value.durationOptions,
-                onTimeOfTheDaySelect = viewModel::onTimeOfTheDaySelect,
-                onTypeSelect = viewModel::onTypeSelect,
-                onDurationSelect = viewModel::onDurationSelect
+                modifier = Modifier.fillMaxWidth(),
+                uiState = uiState,
+                sendIntent = sendIntent,
             )
         }
 
         BottomButton(
             modifier = Modifier.padding(horizontal = 16.dp),
             text = stringResource(id = R.string.pay_with),
-            onClick = { /*TODO*/ }
+            icon = ImageVector.vectorResource(id = R.drawable.yapay_logo),
+            onClick = { sendIntent(HomeContract.Intent.Pay) }
         )
     }
 }
@@ -94,7 +126,7 @@ fun HelloView(
 }
 
 @Composable
-fun CurrentMembershipSection() {
+fun CurrentMembershipSection(text: AnnotatedString, onHistoryClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -116,18 +148,17 @@ fun CurrentMembershipSection() {
         ) {
             MembershipCard(
                 modifier = Modifier
-                    .weight(0.75f)
+                    .weight(0.8f)
                     .fillMaxWidth(),
                 pulseColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-                description = AnnotatedString(""),
-                period = AnnotatedString(""),
+                description = text,
                 isRepeatable = false
             )
 
             Column(
                 modifier = Modifier
-                    .clickable { /*TODO*/ }
-                    .weight(0.25f)
+                    .clickable { onHistoryClick() }
+                    .weight(0.2f)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
@@ -151,61 +182,67 @@ fun CurrentMembershipSection() {
 @Composable
 fun MembershipBuilderSection(
     modifier: Modifier = Modifier,
-    timeOfTheDayOption: List<OptionUiModel<TimeOfTheDay>>,
-    typeOptions: List<OptionUiModel<MembershipType>>,
-    durationOptions: List<OptionUiModel<MembershipDuration>>,
-    onTimeOfTheDaySelect: (TimeOfTheDay) -> Unit,
-    onTypeSelect: (MembershipType) -> Unit,
-    onDurationSelect: (MembershipDuration) -> Unit
+    uiState: HomeContract.UiState,
+    sendIntent: (BaseIntent) -> Unit
 ) {
     Column(
         modifier = modifier.padding(start = 6.dp, end = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            modifier = modifier.padding(start = 20.dp),
-            text = stringResource(id = R.string.membership_builder),
-            style = MaterialTheme.typography.titleSmall,
-            color = blue_68a4ff.copy(alpha = 0.81f)
-        )
 
-        PulseCard(
-            modifier = modifier,
-            pulseColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-        ) {
-            Column(
-                modifier = modifier.padding(horizontal = 8.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column {
+            Text(
+                modifier = modifier.padding(start = 20.dp),
+                text = stringResource(id = R.string.membership_builder),
+                style = MaterialTheme.typography.titleSmall,
+                color = blue_68a4ff.copy(alpha = 0.81f)
+            )
+
+            PulseCard(
+                modifier = modifier,
+                pulseColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             ) {
-                Row(modifier = modifier) {
-                    timeOfTheDayOption.forEach { item ->
-                        OptionView(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            optionUiModel = item,
-                            isSelected = item.isSelected,
-                            onClick = { onTimeOfTheDaySelect(item.option) }
-                        )
+                Column(
+                    modifier = modifier.padding(horizontal = 8.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(modifier = modifier) {
+                        uiState.timeOfTheDayOption.forEach { item ->
+                            OptionView(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                optionUiModel = item,
+                                isSelected = item.isSelected,
+                                onClick = { sendIntent(HomeContract.Intent.SelectTimeOfTheDay(item.option)) }
+                            )
+                        }
                     }
-                }
 
-                Row {
-                    typeOptions.forEach { item ->
-                        OptionView(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            optionUiModel = item,
-                            isSelected = item.isSelected,
-                            onClick = { onTypeSelect(item.option) }
-                        )
+                    Row {
+                        uiState.typeOptions.forEach { item ->
+                            OptionView(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                optionUiModel = item,
+                                isSelected = item.isSelected,
+                                onClick = { sendIntent(HomeContract.Intent.SelectType(item.option)) }
+                            )
+                        }
                     }
-                }
 
-                Row {
-                    durationOptions.forEach { item ->
-                        OptionView(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            optionUiModel = item,
-                            isSelected = item.isSelected,
-                            onClick = { onDurationSelect(item.option) }
-                        )
+                    Row {
+                        uiState.durationOptions.forEach { item ->
+                            OptionView(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                optionUiModel = item,
+                                isSelected = item.isSelected,
+                                onClick = { sendIntent(HomeContract.Intent.SelectDuration(item.option)) }
+                            )
+                        }
                     }
                 }
             }
@@ -213,9 +250,11 @@ fun MembershipBuilderSection(
 
         PlaceSelectInput(
             modifier = Modifier.padding(horizontal = 16.dp),
-            text = "",
-            onClick = { /*TODO*/ }
+            text = uiState.favouritePlaces,
+            onClick = { sendIntent(HomeContract.Intent.SelectPlace) }
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -223,7 +262,7 @@ fun MembershipBuilderSection(
                 withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
                     append(stringResource(id = R.string.price_bold))
                 }
-                append(stringResource(id = R.string.price_rest, "49 000"))
+                append(stringResource(id = R.string.price_rest, uiState.price))
             },
             style = MaterialTheme.typography.bodyMedium
         )
@@ -244,7 +283,9 @@ fun OptionView(
 
     Surface(modifier = mModifier) {
         Text(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
             text = stringResource(id = optionUiModel.name).capitalize(Locale.current),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
@@ -252,6 +293,132 @@ fun OptionView(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaymentStateDialog(state: PaymentState, sheetState: SheetState, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        when (state) {
+            PaymentState.IN_PROGRESS -> PaymentLoadingView()
+            PaymentState.SUCCESS -> PaymentSuccessView()
+            PaymentState.REJECTED -> PaymentRejectedView()
+            else -> {}
+        }
+    }
+}
+
+@Composable
+fun PaymentLoadingView() {
+    val infiniteTransition = rememberInfiniteTransition(label = "Pulse animation state")
+
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Pulsation animation"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(modifier = Modifier.scale(scale)) {
+            Surface(
+                modifier = Modifier
+                    .size(100.dp)
+                    .blur(radius = 5.dp)
+                    .padding(5.dp),
+//                    .background(lightGradient, CircleShape),
+                color = purple_9999ff,
+                shape = CircleShape,
+                content = {}
+            )
+        }
+
+        Text(text = stringResource(id = R.string.payment_loading))
+    }
+}
+
+@Composable
+fun PaymentSuccessView() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier
+                    .size(120.dp)
+                    .blur(radius = 5.dp)
+                    .padding(5.dp),
+                color = green_success,
+                shape = CircleShape
+            ) {}
+
+            Icon(
+                modifier = Modifier.size(76.dp),
+                imageVector = Icons.Rounded.Check,
+                tint = white,
+                contentDescription = "Payment success"
+            )
+        }
+
+        Text(text = stringResource(id = R.string.payment_success), textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+fun PaymentRejectedView() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier
+                    .size(120.dp)
+                    .blur(radius = 5.dp)
+                    .padding(5.dp),
+                color = red_error,
+                shape = CircleShape
+            ) {}
+
+            Icon(
+                modifier = Modifier.size(76.dp),
+                imageVector = Icons.Rounded.Close,
+                tint = white,
+                contentDescription = "Payment rejected"
+            )
+        }
+
+        Text(text = stringResource(id = R.string.payment_error), textAlign = TextAlign.Center)
+    }
+}
+
+@Preview
+@Composable
+fun PaymentDialogPreview() {
+    val sheetState = rememberModalBottomSheetState()
+
+    PulsePowerTheme {
+        PaymentStateDialog(state = PaymentState.REJECTED, sheetState = sheetState) {}
     }
 }
 
@@ -287,6 +454,10 @@ fun OptionPreview() {
 @Composable
 fun HomeScreenPreview() {
     PulsePowerTheme {
-        HomeScreen()
+        HomeScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = HomeContract.UiState(),
+            {}
+        )
     }
 }

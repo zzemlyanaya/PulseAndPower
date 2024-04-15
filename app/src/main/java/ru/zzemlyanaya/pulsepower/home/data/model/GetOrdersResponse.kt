@@ -5,5 +5,5 @@ import java.io.Serializable
 
 @Keep
 class GetOrdersResponse(
-    val orders: List<OrderResponse>
+    val orders: List<OrderResponse>?
 ) : Serializable

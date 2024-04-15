@@ -1,39 +1,46 @@
 package ru.zzemlyanaya.pulsepower.auth.presentation.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
-import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
-import ru.zzemlyanaya.pulsepower.auth.presentation.model.intent.AuthIntent
+import ru.zzemlyanaya.pulsepower.app.theme.*
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.AuthContract
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.AuthContract.Intent.*
 import ru.zzemlyanaya.pulsepower.auth.presentation.viewmodel.AuthViewModel
+import ru.zzemlyanaya.pulsepower.core.ui.BaseScreen
 import ru.zzemlyanaya.pulsepower.uikit.*
 
 
 @Composable
+fun AuthScreen(modifier: Modifier = Modifier) {
+    val viewModel = hiltViewModel<AuthViewModel>()
+
+    BaseScreen<AuthContract.UiState>(
+        modifier = modifier,
+        uiFlow = viewModel.screenState,
+        sendIntent = viewModel::sendIntent,
+        loadingContent = { mModifier, uiState, sendEvent -> AuthScreen(mModifier, uiState, sendEvent, true) },
+        dataContent = { mModifier, uiState, sendEvent -> AuthScreen(mModifier, uiState, sendEvent) }
+    )
+}
+
+@Composable
 fun AuthScreen(
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = viewModel()
+    uiState: AuthContract.UiState,
+    sendIntent: (AuthContract.Intent) -> Unit,
+    showLoading: Boolean = false
 ) {
-
-    @Composable
-    fun sendIntent(intent: AuthIntent) {
-        LocalLifecycleOwner.current.lifecycleScope.launch { viewModel.sendIntent(intent) }
-    }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
@@ -51,14 +58,14 @@ fun AuthScreen(
             verticalArrangement = Arrangement.Top
         ) {
             PhoneInput(
-                modifier = modifier,
-                value = viewModel.authUiState.value.phone,
-                onValueChanged = { scope.sendIntent(AuthIntent.UpdatePhone(it)) },
-                error = viewModel.authUiState.value.phoneError,
-                onDone = { scope.sendIntent(AuthIntent.SignInClick) }
+                modifier = Modifier.fillMaxWidth(),
+                value = uiState.phone,
+                onValueChanged = { sendIntent(UpdatePhone(it)) },
+                error = uiState.phoneError,
+                onDone = { sendIntent(SignIn) }
             )
             Text(
-                modifier = modifier
+                modifier = Modifier
                     .padding(6.dp)
                     .fillMaxWidth(),
                 text = stringResource(id = R.string.sign_in_up_hint),
@@ -67,10 +74,19 @@ fun AuthScreen(
             )
         }
 
-        BottomButton(
-            text = stringResource(id = R.string.login),
-            onClick = viewModel::onSingInClick
-        )
+        if (showLoading) {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+            ) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        } else {
+            BottomButton(
+                text = stringResource(id = R.string.login),
+                onClick = { sendIntent(SignIn) }
+            )
+        }
     }
 }
 
@@ -78,6 +94,23 @@ fun AuthScreen(
 @Composable
 fun AuthScreenPreview() {
     PulsePowerTheme {
-        AuthScreen()
+        AuthScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = AuthContract.UiState(),
+            sendIntent = { }
+        )
+    }
+}
+
+@Preview(device = Devices.PIXEL_4A, heightDp = 750)
+@Composable
+fun AuthScreenLoadingPreview() {
+    PulsePowerTheme {
+        AuthScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = AuthContract.UiState(),
+            sendIntent = { },
+            showLoading = true
+        )
     }
 }

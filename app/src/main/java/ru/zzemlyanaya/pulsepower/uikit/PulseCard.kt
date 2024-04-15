@@ -1,6 +1,7 @@
 package ru.zzemlyanaya.pulsepower.uikit
 
 import android.graphics.BlurMaskFilter
+import android.text.SpannableString
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -46,7 +47,6 @@ fun MembershipCard(
     modifier: Modifier = Modifier,
     pulseColor: Color,
     description: AnnotatedString,
-    period: AnnotatedString,
     isRepeatable: Boolean,
     onRepeat: () -> Unit = {}
 ) {
@@ -58,7 +58,7 @@ fun MembershipCard(
         ) {
             Text(
                 modifier = Modifier.weight(1f),
-                text = description + AnnotatedString("\n\n") + period,
+                text = description,
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -98,7 +98,6 @@ fun SubscriptionHistoryViewPreview() {
         MembershipCard(
             pulseColor = white.copy(alpha = 0.5f),
             description = AnnotatedString("Индивидуальные утренние занятия"),
-            period = AnnotatedString("На 3 месяца"),
             isRepeatable = true,
             onRepeat = {}
         )
@@ -112,7 +111,6 @@ fun SubscriptionActiveViewPreview() {
         MembershipCard(
             pulseColor = purple_9999ff.copy(alpha = 0.5f),
             description = AnnotatedString("Индивидуальные утренние занятия"),
-            period = AnnotatedString("На 3 месяца до 11.06.2024"),
             isRepeatable = false
         )
     }

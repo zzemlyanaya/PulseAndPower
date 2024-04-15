@@ -3,17 +3,18 @@ package ru.zzemlyanaya.pulsepower.home.data.api
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import ru.zzemlyanaya.pulsepower.home.data.model.*
 import ru.zzemlyanaya.pulsepower.profile.data.model.PlacesResponse
 
 interface StoreApi {
 
-    @GET("store/order")
-    fun createOrder(@Body request: CreateOrderRequest): Response<OrderResponse>
+    @POST("store/order")
+    suspend fun createOrder(@Body request: CreateOrderRequest): OrderResponse
 
     @GET("store/orders")
-    fun getAllOrders(): Response<GetOrdersResponse>
+    suspend fun getAllOrders(): GetOrdersResponse
 
     @GET("store/places")
-    fun getAllPlaces(): Response<PlacesResponse>
+    suspend fun getAllPlaces(): PlacesResponse
 }

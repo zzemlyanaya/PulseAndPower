@@ -26,12 +26,30 @@
     <string name="name">Имя</string>
     <string name="surname">Фамилия</string>
     <string name="patronymic">Отчество</string>
+    <string name="enter_code">Ввести код</string>
 
     <!-- PLACE SELECT -->
+    <string name="place_select_prompt">Нажмите чтобы выбрать</string>
     <string name="places_select">Выбор филиалов</string>
     <string name="choose_up_to_5">Выберите до 5 филиалов</string>
     <string name="choose_at_least_one_error">Выберите хотя бы один филиал</string>
     <string name="favourite_places">Любимые филиалы:</string>
+
+    <plurals name="place">
+        <item quantity="one">%d филиал</item>
+        <item quantity="two">%d филиала</item>
+        <item quantity="few">%d филиала</item>
+        <item quantity="many">%d филиалов</item>
+        <item quantity="other">%d филиала</item>
+    </plurals>
+
+    <plurals name="city">
+        <item quantity="one">%d городе</item>
+        <item quantity="two">%d городах</item>
+        <item quantity="few">%d городах</item>
+        <item quantity="many">%d городах</item>
+        <item quantity="other">%d городах</item>
+    </plurals>
 
     <!-- PROFILE -->
     <string name="profile">Профиль</string>
@@ -41,20 +59,22 @@
     <string name="made_in">Сделано в\ </string>
     <string name="dungeons">Подземельях</string>
     <string name="version">Версия %s</string>
+    <string name="company_site">https://www.stangenes.com/what-is-pulsed-power/</string>
+    <string name="dev_site">https://github.com/GlazProject/Robots</string>
 
     <!-- HISTORY -->
     <string name="history_title">Все ваши абонементы</string>
     <string name="individual">Индивидуальные</string>
     <string name="group">Групповые</string>
     <string name="all_inclusive">\"всё включено\"</string>
-    <string name="all_inclusive_type">всё включено</string>
+    <string name="all_inclusive_type">Всё включено</string>
     <string name="morning">утренние</string>
     <string name="evening">вечерние</string>
     <string name="all_day">весь день</string>
     <string name="description_type_1">%s %s занятия</string>
     <string name="description_type_2">Занятия %s %s</string>
     <string name="description_type_3">%s занятия %s</string>
-    <string name="for_period">На\ </string>
+    <string name="for_period">На\ %s</string>
     <string name="until">до %s</string>
 
     <string name="months3">3 месяца</string>
@@ -78,4 +98,11 @@
     <string name="price_bold">Стоимость:\ </string>
     <string name="price_rest">%s руб.</string>
     <string name="no_membership">Здесь пока ничего нет.\nСоберите свой идеальный абонемент с помощью конструктора.</string>
+    <string name="no_membership_1">пока</string>
+    <string name="no_membership_2">идеальный абонемент</string>
+    <string name="no_membership_3">конструктора</string>
+
+    <string name="payment_loading">Ждём ответа от банка</string>
+    <string name="payment_success">Готово! Абонементом можно пользоваться.</string>
+    <string name="payment_error">Оплата не прошла.\nПожалуйста попробуйте ещё раз</string>
 </resources>

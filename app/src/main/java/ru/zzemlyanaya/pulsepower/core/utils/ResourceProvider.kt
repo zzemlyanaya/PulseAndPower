@@ -1,9 +1,18 @@
 package ru.zzemlyanaya.pulsepower.core.utils
 
+import android.content.Context
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-interface ResourceProvider {
-    fun getString(@StringRes resourceId: Int, varargs: Any): String
+@Singleton
+class ResourceProvider @Inject constructor(@ApplicationContext private val context: Context) {
 
-    fun getPluralString(@StringRes resourceId: Int, quantity: Int, varargs: Any): String
+    fun getString(@StringRes resId: Int): String = context.getString(resId)
+    fun getString(@StringRes resId: Int, vararg arg: Any): String = context.getString(resId, *arg)
+
+    fun getPlurals(@PluralsRes resId: Int, quantity: Int, vararg arg: Any): String =
+        context.resources.getQuantityString(resId, quantity, *arg)
 }

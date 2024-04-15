@@ -1,42 +1,91 @@
 package ru.zzemlyanaya.pulsepower.auth.presentation.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.navigation.*
-import ru.zzemlyanaya.pulsepower.auth.presentation.model.SignUpUiState
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.SignUpContract
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
+import ru.zzemlyanaya.pulsepower.core.utils.ResourceProvider
 import ru.zzemlyanaya.pulsepower.core.viewModel.BaseViewModel
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.mapping.PlacesUiMapper
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.model.CityItemUiModel
+import ru.zzemlyanaya.pulsepower.placeSelect.presentation.viewModel.PlaceSelectViewModel.Companion.PLACE_SELECT_RESULT
+import ru.zzemlyanaya.pulsepower.profile.domain.interactor.UserInteractor
+import ru.zzemlyanaya.pulsepower.profile.domain.model.UserEntityProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
+    private val placesMapper: PlacesUiMapper,
+    private val interactor: UserInteractor,
+    private val userProvider: UserEntityProvider,
+    private val resourceProvider: ResourceProvider,
     private val router: NavigationRouter
-) : BaseViewModel(router) {
+) : BaseViewModel<SignUpContract.UiState, SignUpContract.Intent>(router) {
 
-    private val mutableUiState = mutableStateOf(SignUpUiState())
-    val signUpUiState: State<SignUpUiState> = mutableUiState
+    override fun getInitialState() = SignUpContract.UiState()
 
-    fun updateName(name: String) {
-        mutableUiState.value = mutableUiState.value.copy(name = name)
+    init {
+        updateDataState { it.copy(favouritePlaces = userProvider.userEntity.favouritePlacesText) }
     }
 
-    fun updateSurname(surname: String) {
-        mutableUiState.value = mutableUiState.value.copy(surname = surname)
+    override fun handleIntent(intent: BaseIntent) {
+        when (intent) {
+            is SignUpContract.Intent.UpdateName -> updateName(intent.name)
+            is SignUpContract.Intent.UpdateSurname -> updateSurname(intent.surname)
+            is SignUpContract.Intent.UpdatePatronymic -> updatePatronymic(intent.patronymic)
+            is SignUpContract.Intent.SelectPlaces -> onSelectPlaces()
+            is SignUpContract.Intent.SignUp -> onSignUpClick()
+            else -> super.handleIntent(intent)
+        }
     }
 
-    fun updatePatronymic(patronymic: String) {
-        mutableUiState.value = mutableUiState.value.copy(patronymic = patronymic)
+    private fun updateName(name: String) {
+        updateDataState { it.copy(name = name, nameError = null) }
     }
 
-    fun updatePhone(phone: String) {
-        mutableUiState.value = mutableUiState.value.copy(phone = phone)
+    private fun updateSurname(surname: String) {
+        updateDataState { it.copy(surname = surname, surnameError = null) }
     }
 
-    fun onSignUpClick() {
-        router.navigateTo(AuthDirections.phoneConfirm)
+    private fun updatePatronymic(patronymic: String) {
+        updateDataState { it.copy(patronymic = patronymic, patronymicError = null) }
     }
 
-    fun onSelectPlaces() {
+    private fun onSelectPlaces() {
+        router.addResultListener<List<CityItemUiModel>>(PLACE_SELECT_RESULT) {
+            router.removeResultListener(PLACE_SELECT_RESULT)
+            handlePlaceSelectResult(it)
+        }
+
         router.navigateTo(MainDirections.placeSelect)
+    }
+
+    private fun handlePlaceSelectResult(result: List<CityItemUiModel>) {
+        userProvider.userEntity = userProvider.userEntity.copy(
+            favouritePlacesIds = placesMapper.mapToIds(result),
+            favouritePlacesText = placesMapper.mapSelectResult(result)
+        )
+        updateDataState { it.copy(favouritePlaces = userProvider.userEntity.favouritePlacesText) }
+    }
+
+    private fun onSignUpClick() {
+        with(getUiState()) {
+            if (name.isEmpty() || surname.isEmpty()) return
+
+            ioScope.launch {
+                showLoading()
+                interactor.createUserInfo(
+                    userProvider.userEntity.copy(
+                        name = name,
+                        surname = surname,
+                        patronymic = patronymic
+                    )
+                )
+
+                router.navigateTo(MainDirections.home)
+            }
+        }
     }
 }

@@ -7,24 +7,33 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import ru.zzemlyanaya.pulsepower.app.navigation.MainDirections
-import ru.zzemlyanaya.pulsepower.app.navigation.NavigationRouter
+import ru.zzemlyanaya.pulsepower.app.navigation.*
 import ru.zzemlyanaya.pulsepower.auth.domain.interactor.AuthInteractor
+import ru.zzemlyanaya.pulsepower.auth.presentation.model.contract.CodeConfirmContract
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.core.viewModel.BaseViewModel
+import ru.zzemlyanaya.pulsepower.profile.domain.interactor.UserInteractor
 import javax.inject.Inject
 
 @HiltViewModel
 class PhoneConfirmViewModel @Inject constructor(
     private val interactor: AuthInteractor,
+    private val userInteractor: UserInteractor,
     private val router: NavigationRouter
-) : BaseViewModel(router) {
+) : BaseViewModel<CodeConfirmContract.UiState, CodeConfirmContract.Intent>(router) {
 
-    private val _code = mutableStateOf("")
-    val code: State<String> = _code
+    override fun getInitialState() = CodeConfirmContract.UiState()
 
-    fun updateCode(code: String) {
-        _code.value = code
-        _baseUiState.value = _baseUiState.value.copy(error = null)
+    override fun handleIntent(intent: BaseIntent) {
+        when (intent) {
+            is CodeConfirmContract.Intent.UpdateCode -> updateCode(intent.code)
+            is CodeConfirmContract.Intent.EnterCode -> updateCode(router.getCurrentArgs())
+            else -> super.handleIntent(intent)
+        }
+    }
+
+    private fun updateCode(code: String) {
+        updateDataState { it.copy(code = code) }
         validateCode(code)
     }
 
@@ -32,20 +41,24 @@ class PhoneConfirmViewModel @Inject constructor(
         when {
             code.length < CODE_LENGTH -> return
             code.length == CODE_LENGTH -> sendCode(code)
-            else -> _baseUiState.value = _baseUiState.value.copy(error = "")
+            else -> updateDataState { it.copy(codeError = "") }
         }
     }
 
     private fun sendCode(code: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _baseUiState.value = _baseUiState.value.copy(isLoading = true)
+        ioScope.launch(Dispatchers.IO) {
+            showLoading()
             val result = interactor.confirmCode(code)
 
             if (result.isSuccessful) {
-                _baseUiState.value = _baseUiState.value.copy(isLoading = false)
-                router.navigateTo(MainDirections.home)
+                ioScope.launch {
+                    val user = userInteractor.getUserInfo()
+
+                    if (user.name.isEmpty() || user.surname.isEmpty()) router.navigateTo(AuthDirections.signUp)
+                    else router.navigateTo(MainDirections.home)
+                }
             } else {
-                _baseUiState.value = _baseUiState.value.copy(isLoading = false, error = "")
+                showError(result.message())
             }
         }
     }

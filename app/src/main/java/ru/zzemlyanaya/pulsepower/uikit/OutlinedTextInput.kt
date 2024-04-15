@@ -25,7 +25,8 @@ fun OutlinedTextInput(
     prefix: String? = null,
     error: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    enabled: Boolean = true
 ) {
     var focusState by remember { mutableStateOf(false) }
 
@@ -73,7 +74,8 @@ fun OutlinedTextInput(
             errorContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions
+        keyboardActions = keyboardActions,
+        enabled = enabled
     )
 }
 
