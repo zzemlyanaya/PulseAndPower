@@ -13,8 +13,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.zzemlyanaya.pulsepower.R
-import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
-import ru.zzemlyanaya.pulsepower.app.theme.bodyMediumOnSurface
+import ru.zzemlyanaya.pulsepower.app.theme.*
 
 @Composable
 fun OutlinedTextInput(
@@ -67,6 +66,8 @@ fun OutlinedTextInput(
         textStyle = MaterialTheme.typography.bodyMedium,
         shape = MaterialTheme.shapes.medium,
         colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = white_caption,
+            disabledBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.primary,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -108,6 +109,14 @@ fun PhoneInput(
 fun OutlinedTextInputPreview() {
     PulsePowerTheme {
         OutlinedTextInput(value = "", prefix = "~", placeholder = "Label", onValueChanged = {})
+    }
+}
+
+@Preview
+@Composable
+fun OutlinedTextInputDisabledPreview() {
+    PulsePowerTheme {
+        OutlinedTextInput(value = "Value", prefix = "~", placeholder = "Label", onValueChanged = {}, enabled = false)
     }
 }
 

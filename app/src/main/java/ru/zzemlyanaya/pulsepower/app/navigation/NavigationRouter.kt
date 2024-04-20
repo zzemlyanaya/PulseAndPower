@@ -1,23 +1,26 @@
 package ru.zzemlyanaya.pulsepower.app.navigation
 
-import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.flow.*
 import ru.zzemlyanaya.pulsepower.app.navigation.MainDirections.back
 import ru.zzemlyanaya.pulsepower.app.navigation.MainDirections.default
 
 class NavigationRouter {
 
-    var commands = MutableStateFlow(default)
+    private val _commands = MutableLiveData(default)
+    val commands: LiveData<NavigationCommand> = _commands
+
     private val resultListeners: HashMap<Int, ResultListener> = hashMapOf()
 
-    fun <T> getCurrentArgs() = commands.value.args.first() as T
+    fun <T> getCurrentArgs() = _commands.value?.args?.firstOrNull() as? T
 
     fun navigateTo(directions: NavigationCommand) {
-        commands.value = directions
+        _commands.postValue(directions)
     }
 
     fun back() {
-        commands.value = back
+        _commands.postValue(back)
     }
 
     @Suppress("UNCHECKED_CAST")

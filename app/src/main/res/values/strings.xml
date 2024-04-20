@@ -11,11 +11,14 @@
     <string name="incorrect_phone_error">Некорректный номер телефона</string>
     <string name="notfound_phone_error">Пользователь с таким номером не найден</string>
     <string name="code_error">Введён неверный код</string>
+    <string name="server_error_title">Что-то пошло нет так</string>
+    <string name="server_error_text">В Подземельях уже зашебуршали разработчки и скоро всё починят</string>
 
     <string name="code_default">1234</string>
 
     <string name="ready">Готово</string>
     <string name="save">Сохранить</string>
+    <string name="close">Закрыть</string>
 
     <!-- AUTH -->
     <string name="phone">Номер телефона</string>
@@ -26,6 +29,7 @@
     <string name="name">Имя</string>
     <string name="surname">Фамилия</string>
     <string name="patronymic">Отчество</string>
+    <string name="patronymic_absent">Не указано</string>
     <string name="enter_code">Ввести код</string>
 
     <!-- PLACE SELECT -->

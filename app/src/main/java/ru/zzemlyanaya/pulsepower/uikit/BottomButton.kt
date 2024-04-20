@@ -36,7 +36,7 @@ fun BottomButton(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(text = text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
-            icon?.let { Icon(imageVector = it, contentDescription = "Btn icon") }
+            icon?.let { Icon(imageVector = it, contentDescription = "Btn icon", tint = Color.Unspecified) }
         }
     }
 }

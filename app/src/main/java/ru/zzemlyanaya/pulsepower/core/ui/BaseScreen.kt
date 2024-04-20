@@ -15,9 +15,9 @@ fun <S: Any> BaseScreen(
     modifier: Modifier,
     uiFlow: StateFlow<ScreenUiState>,
     sendIntent: suspend (BaseIntent) -> Unit,
-    errorContent: @Composable () -> Unit = {},
-    loadingContent: @Composable (Modifier, S, (BaseIntent) -> Unit) -> Unit = { _, _, _ -> },
     dataContent: @Composable (Modifier, S, (BaseIntent) -> Unit) -> Unit,
+    errorContent: @Composable (Modifier, S, (BaseIntent) -> Unit) -> Unit = { m, s, i -> dataContent(m, s, i) },
+    loadingContent: @Composable (Modifier, S, (BaseIntent) -> Unit) -> Unit = { _, _, _ -> },
 ){
     val scope = LocalLifecycleOwner.current.lifecycleScope
 
@@ -27,7 +27,11 @@ fun <S: Any> BaseScreen(
 
     val uiState by uiFlow.collectAsState()
     when (uiState) {
-        is ScreenUiState.Error -> errorContent()
+        is ScreenUiState.Error<*> -> errorContent(
+            modifier.fillMaxSize(),
+            (uiState as ScreenUiState.Error<*>).state as S,
+            ::sendIntentInternal
+        )
         is ScreenUiState.Loading<*> -> loadingContent(
             modifier.fillMaxSize(),
             (uiState as ScreenUiState.Loading<*>).state as S,

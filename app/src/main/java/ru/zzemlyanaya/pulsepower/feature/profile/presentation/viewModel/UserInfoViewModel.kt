@@ -3,6 +3,7 @@ package ru.zzemlyanaya.pulsepower.feature.profile.presentation.viewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
+import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.navigation.MainDirections
 import ru.zzemlyanaya.pulsepower.app.navigation.NavigationRouter
 import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
@@ -21,6 +22,7 @@ class UserInfoViewModel @Inject constructor(
     private val placesMapper: PlacesUiMapper,
     private val interactor: UserInteractor,
     private val userProvider: UserEntityProvider,
+    private val resourceProvider: ResourceProvider,
     private val router: NavigationRouter
 ) : BaseViewModel<UserInfoContract.UiState, UserInfoContract.Intent>(router) {
 
@@ -30,7 +32,7 @@ class UserInfoViewModel @Inject constructor(
         updateDataState { it.copy(
             name = userProvider.userEntity.name,
             surname = userProvider.userEntity.surname,
-            patronymic = userProvider.userEntity.patronymic,
+            patronymic = userProvider.userEntity.patronymic.takeIf { it.isNotEmpty() } ?: resourceProvider.getString(R.string.patronymic_absent),
             phone = userProvider.userEntity.phone,
             favouritePlaces = userProvider.userEntity.favouritePlacesText
         ) }

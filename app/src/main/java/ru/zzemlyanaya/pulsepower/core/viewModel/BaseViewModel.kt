@@ -63,11 +63,15 @@ abstract class BaseViewModel<UiState, UiIntent : BaseIntent>(
     }
 
     protected fun showError(error: String) {
-        _screenState.value = ScreenUiState.Error(error)
+        _screenState.value = ScreenUiState.Error(error, getUiState())
     }
 
     protected fun showLoading() {
         _screenState.value = ScreenUiState.Loading(getUiState())
+    }
+
+    protected fun hideLoading() {
+        _screenState.value = ScreenUiState.Data(getUiState())
     }
 
     protected fun getUiState(): UiState {
@@ -80,7 +84,7 @@ abstract class BaseViewModel<UiState, UiIntent : BaseIntent>(
 
     protected open fun handleException(e: Throwable) {
         e.printStackTrace()
-        showError(e.message ?: "Что-то пошло не так, но мы уже работает над этим!")
+        showError(e.message.orEmpty())
     }
 
     protected open fun back() {

@@ -1,8 +1,6 @@
 package ru.zzemlyanaya.pulsepower.feature.auth.presentation.viewmodel
 
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.zzemlyanaya.pulsepower.app.navigation.*
 import ru.zzemlyanaya.pulsepower.feature.auth.domain.interactor.AuthInteractor
@@ -48,6 +46,7 @@ class AuthViewModel @Inject constructor(
                         ioScope.launch {
                             val code = interactor.getConfirmCode()
                             if (code.isSuccessful) {
+                                hideLoading()
                                 result.headers()["X-AuthSid"]?.let { sid -> handleAuthSid(sid) }
                                 router.navigateTo(AuthDirections.phoneConfirm(code.body().orEmpty()))
                             } else {

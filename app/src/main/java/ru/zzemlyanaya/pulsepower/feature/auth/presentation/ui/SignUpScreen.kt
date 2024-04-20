@@ -1,5 +1,6 @@
 package ru.zzemlyanaya.pulsepower.feature.auth.presentation.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.model.contract.SignUpContract
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.viewmodel.SignUpViewModel
 import ru.zzemlyanaya.pulsepower.core.ui.BaseScreen
@@ -31,7 +33,22 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         uiFlow = viewModel.screenState,
         sendIntent = viewModel::sendIntent,
-        loadingContent = { mModifier, uiState, sendEvent -> SignUpScreen(mModifier, uiState, sendEvent, true) },
+        errorContent = { mModifier, uiState, sendEvent ->
+            SignUpScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showError = true
+            )
+        },
+        loadingContent = { mModifier, uiState, sendEvent ->
+            SignUpScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showLoading = true
+            )
+        },
         dataContent = { mModifier, uiState, sendEvent -> SignUpScreen(mModifier, uiState, sendEvent) }
     )
 
@@ -41,8 +58,9 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
 fun SignUpScreen(
     modifier: Modifier = Modifier,
     uiState: SignUpContract.UiState,
-    sendIntent: (SignUpContract.Intent) -> Unit,
-    showLoading: Boolean = false
+    sendIntent: (BaseIntent) -> Unit,
+    showLoading: Boolean = false,
+    showError: Boolean = false
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -111,9 +129,10 @@ fun SignUpScreen(
 
 
         if (showLoading) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
@@ -123,6 +142,8 @@ fun SignUpScreen(
                 onClick = { sendIntent(SignUpContract.Intent.SignUp) }
             )
         }
+
+        if (showError) DefaultErrorDialog()
     }
 }
 

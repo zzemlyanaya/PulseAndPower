@@ -1,9 +1,13 @@
 package ru.zzemlyanaya.pulsepower.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.*
 import androidx.navigation.compose.*
 import androidx.navigation.compose.navigation
@@ -23,15 +27,15 @@ fun PulseAndPowerApp(navigationRouter: NavigationRouter) {
         Surface(modifier = Modifier.fillMaxSize()) {
             val navController = rememberNavController()
 
-            navigationRouter.commands.collectAsState().value.also { command ->
-                if (command.destination == MainDirections.back.destination) {
+            navigationRouter.commands.observe(LocalLifecycleOwner.current) { nextCommand ->
+                if (nextCommand.destination == MainDirections.back.destination) {
                     navController.popBackStack()
-                } else if (command.destination.isNotEmpty()) {
-                    navController.navigate(command.destination)
+                } else if (nextCommand.destination.isNotEmpty()) {
+                    navController.navigate(nextCommand.destination) { launchSingleTop = true }
                 }
             }
 
-            AppNavGraph(navController)
+            AppNavGraph(navController, onBack = navigationRouter::back)
         }
     }
 }
@@ -39,6 +43,7 @@ fun PulseAndPowerApp(navigationRouter: NavigationRouter) {
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     startDestination: String = MainDestination.Auth.route,
 ) {
@@ -53,6 +58,7 @@ fun AppNavGraph(
             }
 
             composable(AuthDestination.SignUp.route) {
+                BackHandler(true) {}
                 SignUpScreen(modifier = modifier)
             }
 
@@ -63,23 +69,28 @@ fun AppNavGraph(
 
         navigation(route = MainDestination.Home.route, startDestination = HomeDestination.Home.route) {
             composable(HomeDestination.Home.route) {
+                BackHandler(true) {}
                 HomeScreen(modifier = modifier)
             }
 
             composable(HomeDestination.Profile.route) {
+                BackHandler(true, onBack)
                 ProfileScreen(modifier = modifier)
             }
 
             composable(HomeDestination.History.route) {
+                BackHandler(true, onBack)
                 HistoryScreen(modifier = modifier)
             }
 
             composable(HomeDestination.UserInfo.route) {
+                BackHandler(true, onBack)
                 UserInfoScreen(modifier = modifier)
             }
         }
 
         composable(MainDestination.PlaceSelect.route) {
+            BackHandler(true, onBack)
             PlaceSelectScreen(modifier = modifier)
         }
     }

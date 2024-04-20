@@ -20,10 +20,10 @@ class UserResponseToEntityMapper @Inject constructor(
     )
 
     fun mapUserRequest(user: UserEntity) = CreateUserRequest(
-        FirstName = user.name,
-        LastName = user.surname,
-        Patronimic = user.patronymic,
-        FavouritePlaces = user.favouritePlacesIds
+        name = user.name,
+        surname = user.surname,
+        patronymic = user.patronymic,
+        places = user.favouritePlacesIds
     )
 
 }

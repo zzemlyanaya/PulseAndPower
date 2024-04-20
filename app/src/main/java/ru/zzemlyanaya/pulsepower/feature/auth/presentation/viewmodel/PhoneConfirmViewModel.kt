@@ -23,7 +23,7 @@ class PhoneConfirmViewModel @Inject constructor(
     override fun handleIntent(intent: BaseIntent) {
         when (intent) {
             is CodeConfirmContract.Intent.UpdateCode -> updateCode(intent.code)
-            is CodeConfirmContract.Intent.EnterCode -> updateCode(router.getCurrentArgs())
+            is CodeConfirmContract.Intent.EnterCode -> updateCode(router.getCurrentArgs<String>().orEmpty())
             else -> super.handleIntent(intent)
         }
     }

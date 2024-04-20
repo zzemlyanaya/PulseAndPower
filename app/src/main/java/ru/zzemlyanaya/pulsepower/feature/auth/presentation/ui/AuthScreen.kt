@@ -1,6 +1,6 @@
 package ru.zzemlyanaya.pulsepower.feature.auth.presentation.ui
 
-import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.*
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.model.contract.AuthContract
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.model.contract.AuthContract.Intent.*
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.viewmodel.AuthViewModel
@@ -29,7 +30,22 @@ fun AuthScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         uiFlow = viewModel.screenState,
         sendIntent = viewModel::sendIntent,
-        loadingContent = { mModifier, uiState, sendEvent -> AuthScreen(mModifier, uiState, sendEvent, true) },
+        errorContent = { mModifier, uiState, sendEvent ->
+            AuthScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showError = true
+            )
+        },
+        loadingContent = { mModifier, uiState, sendEvent ->
+            AuthScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showLoading = true
+            )
+        },
         dataContent = { mModifier, uiState, sendEvent -> AuthScreen(mModifier, uiState, sendEvent) }
     )
 }
@@ -38,8 +54,9 @@ fun AuthScreen(modifier: Modifier = Modifier) {
 fun AuthScreen(
     modifier: Modifier = Modifier,
     uiState: AuthContract.UiState,
-    sendIntent: (AuthContract.Intent) -> Unit,
-    showLoading: Boolean = false
+    sendIntent: (BaseIntent) -> Unit,
+    showLoading: Boolean = false,
+    showError: Boolean = false
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -75,9 +92,10 @@ fun AuthScreen(
         }
 
         if (showLoading) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
@@ -86,6 +104,10 @@ fun AuthScreen(
                 text = stringResource(id = R.string.login),
                 onClick = { sendIntent(SignIn) }
             )
+        }
+
+        if (showError) {
+            DefaultErrorDialog()
         }
     }
 }
@@ -111,6 +133,19 @@ fun AuthScreenLoadingPreview() {
             uiState = AuthContract.UiState(),
             sendIntent = { },
             showLoading = true
+        )
+    }
+}
+
+@Preview(device = Devices.PIXEL_4A, heightDp = 750)
+@Composable
+fun AuthScreenErrorPreview() {
+    PulsePowerTheme {
+        AuthScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = AuthContract.UiState(),
+            sendIntent = { },
+            showError = true
         )
     }
 }

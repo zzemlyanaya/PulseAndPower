@@ -1,5 +1,6 @@
 package ru.zzemlyanaya.pulsepower.feature.auth.presentation.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import ru.zzemlyanaya.pulsepower.R
 import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
 import ru.zzemlyanaya.pulsepower.app.theme.blue_68a4ff_60
+import ru.zzemlyanaya.pulsepower.core.contract.BaseIntent
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.model.contract.CodeConfirmContract
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.model.contract.CodeConfirmContract.Intent.*
 import ru.zzemlyanaya.pulsepower.feature.auth.presentation.viewmodel.PhoneConfirmViewModel
@@ -34,6 +36,22 @@ fun PhoneConfirmScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         uiFlow = viewModel.screenState,
         sendIntent = viewModel::sendIntent,
+        errorContent = { mModifier, uiState, sendEvent ->
+            PhoneConfirmScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showError = true
+            )
+        },
+        loadingContent = { mModifier, uiState, sendEvent ->
+            PhoneConfirmScreen(
+                mModifier,
+                uiState,
+                sendEvent,
+                showLoading = true
+            )
+        },
         dataContent = { mModifier, uiState, sendEvent -> PhoneConfirmScreen(mModifier, uiState, sendEvent) }
     )
 }
@@ -42,7 +60,9 @@ fun PhoneConfirmScreen(modifier: Modifier = Modifier) {
 fun PhoneConfirmScreen(
     modifier: Modifier = Modifier,
     uiState: CodeConfirmContract.UiState,
-    sendIntent: (CodeConfirmContract.Intent) -> Unit
+    sendIntent: (BaseIntent) -> Unit,
+    showLoading: Boolean = false,
+    showError: Boolean = false
 ) {
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
@@ -68,10 +88,22 @@ fun PhoneConfirmScreen(
             )
         }
 
-        BottomButton(
-            text = stringResource(id = R.string.enter_code),
-            onClick = { sendIntent(EnterCode) }
-        )
+        if (showLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        } else {
+            BottomButton(
+                text = stringResource(id = R.string.enter_code),
+                onClick = { sendIntent(EnterCode) }
+            )
+        }
+
+        if (showError) DefaultErrorDialog()
     }
 }
 
