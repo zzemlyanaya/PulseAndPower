@@ -9,12 +9,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.zzemlyanaya.pulsepower.app.navigation.NavigationRouter
-import ru.zzemlyanaya.pulsepower.auth.data.api.AuthApi
-import ru.zzemlyanaya.pulsepower.auth.domain.interactor.AuthInteractor
+import ru.zzemlyanaya.pulsepower.app.data.api.AuthApi
 import ru.zzemlyanaya.pulsepower.core.http.AuthCredentialsCache
 import ru.zzemlyanaya.pulsepower.core.http.interceptor.AuthInterceptor
-import ru.zzemlyanaya.pulsepower.home.data.api.StoreApi
-import ru.zzemlyanaya.pulsepower.profile.data.api.UserApi
+import ru.zzemlyanaya.pulsepower.app.data.api.StoreApi
+import ru.zzemlyanaya.pulsepower.app.data.api.UserApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 

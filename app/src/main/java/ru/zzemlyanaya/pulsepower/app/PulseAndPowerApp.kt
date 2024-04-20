@@ -9,12 +9,12 @@ import androidx.navigation.compose.*
 import androidx.navigation.compose.navigation
 import ru.zzemlyanaya.pulsepower.app.navigation.*
 import ru.zzemlyanaya.pulsepower.app.theme.PulsePowerTheme
-import ru.zzemlyanaya.pulsepower.auth.presentation.ui.*
-import ru.zzemlyanaya.pulsepower.history.presentation.ui.HistoryScreen
-import ru.zzemlyanaya.pulsepower.home.presentation.ui.HomeScreen
-import ru.zzemlyanaya.pulsepower.placeSelect.presentation.ui.PlaceSelectScreen
-import ru.zzemlyanaya.pulsepower.profile.presentation.ui.ProfileScreen
-import ru.zzemlyanaya.pulsepower.profile.presentation.ui.UserInfoScreen
+import ru.zzemlyanaya.pulsepower.feature.auth.presentation.ui.*
+import ru.zzemlyanaya.pulsepower.feature.history.presentation.ui.HistoryScreen
+import ru.zzemlyanaya.pulsepower.feature.home.presentation.ui.HomeScreen
+import ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.ui.PlaceSelectScreen
+import ru.zzemlyanaya.pulsepower.feature.profile.presentation.ui.ProfileScreen
+import ru.zzemlyanaya.pulsepower.feature.profile.presentation.ui.UserInfoScreen
 
 @Composable
 fun PulseAndPowerApp(navigationRouter: NavigationRouter) {
