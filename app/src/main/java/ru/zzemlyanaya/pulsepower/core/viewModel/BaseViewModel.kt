@@ -1,8 +1,7 @@
 package ru.zzemlyanaya.pulsepower.core.viewModel
 
 import androidx.annotation.CallSuper
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*

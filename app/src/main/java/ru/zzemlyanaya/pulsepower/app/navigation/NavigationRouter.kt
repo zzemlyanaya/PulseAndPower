@@ -39,6 +39,10 @@ class NavigationRouter {
     fun sendResult(id: Int, result: Any) {
         resultListeners[id]?.onResult(result)
     }
+
+    fun sendResultAll(result: Any) {
+        resultListeners.values.forEach { it.onResult(result) }
+    }
 }
 
 

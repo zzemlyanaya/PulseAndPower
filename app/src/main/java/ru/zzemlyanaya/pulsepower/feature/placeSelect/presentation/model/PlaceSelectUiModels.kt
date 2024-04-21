@@ -2,11 +2,11 @@ package ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.model
 
 import java.io.Serializable
 
-class CityItemUiModel(
+data class CityItemUiModel(
     val name: String,
     val places: List<PlaceUiModel>,
     var isOpen: Boolean
-) : Serializable {
+) {
     val hasSelected get() = places.any { it.isSelected }
 }
 

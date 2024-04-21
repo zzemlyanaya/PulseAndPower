@@ -16,6 +16,5 @@ class UserInteractor @Inject constructor(
 
     suspend fun getUserInfo() = repository.getUserInfo().also { userProvider.userEntity = it }
 
-
     suspend fun setFavouritePlaces(places: List<String>) = repository.setFavouritePlaces(places)
 }

@@ -17,7 +17,6 @@ import ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.mapping.Places
 import ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.model.CityItemUiModel
 import ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.viewModel.PlaceSelectViewModel
 import ru.zzemlyanaya.pulsepower.feature.profile.domain.model.UserEntityProvider
-import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -49,6 +48,7 @@ class HomeViewModel @Inject constructor(
 
         updatePrice()
         loadActiveMemberships()
+        listenSelectPlacesResult()
     }
 
     override fun handleIntent(intent: BaseIntent) {
@@ -58,7 +58,7 @@ class HomeViewModel @Inject constructor(
             is HomeContract.Intent.SelectDuration -> onDurationSelect(intent.membershipDuration)
             is HomeContract.Intent.OpenProfile -> router.navigateTo(HomeDirections.profile)
             is HomeContract.Intent.OpenHistory -> router.navigateTo(HomeDirections.history)
-            is HomeContract.Intent.SelectPlace -> onSelectPlaces()
+            is HomeContract.Intent.SelectPlace -> router.navigateTo(MainDirections.placeSelect)
             is HomeContract.Intent.Pay -> startPayment()
             is HomeContract.Intent.ClosePaymentDialog -> updateDataState { it.copy(paymentState = PaymentState.NONE) }
             else -> super.handleIntent(intent)
@@ -102,13 +102,10 @@ class HomeViewModel @Inject constructor(
         updateDataState { it.copy(price = NumberFormat.getIntegerInstance(Locale.getDefault()).format(price)) }
     }
 
-    private fun onSelectPlaces() {
-        router.addResultListener<List<CityItemUiModel>>(PlaceSelectViewModel.PLACE_SELECT_RESULT) {
-            router.removeResultListener(PlaceSelectViewModel.PLACE_SELECT_RESULT)
+    private fun listenSelectPlacesResult() {
+        router.addResultListener<List<CityItemUiModel>>(PlaceSelectViewModel.PLACE_SELECT_RESULT+this.hashCode()) {
             handlePlaceSelectResult(it)
         }
-
-        router.navigateTo(MainDirections.placeSelect)
     }
 
     private fun handlePlaceSelectResult(result: List<CityItemUiModel>) {
@@ -145,5 +142,10 @@ class HomeViewModel @Inject constructor(
         val p3 = resourceProvider.getString(R.string.no_membership_3)
 
         return mapper.getAnnotatedString(base, listOf(p1, p2, p3))
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        router.removeResultListener(PlaceSelectViewModel.PLACE_SELECT_RESULT)
     }
 }

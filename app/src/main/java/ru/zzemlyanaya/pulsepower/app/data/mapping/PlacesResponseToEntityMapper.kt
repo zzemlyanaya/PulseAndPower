@@ -14,15 +14,10 @@ class PlacesResponseToEntityMapper @Inject constructor(
     fun mapPlacesResponse(response: PlacesResponse) =
         response.addresses.orEmpty().mapValues { it.value.map(::mapPlaceResponse) }
 
-    fun mapPlacesResponse(response: Map<String, List<PlaceResponse>>) = response
-        .map { (_, value) -> value.map { it.id.orEmpty() } }
-        .flatten()
+    fun mapPlacesResponse(response: Map<String, List<PlaceResponse>>) =
+        response.flatMap { (_, places) -> places.map { it.id.orEmpty() } }
 
-    fun mapPlacesRequest(places: List<PlaceEntity>) = SetPlacesRequest(
-        PlaceIds = places.map { it.id }
-    )
-
-    fun mapPlaceResponse(response: PlaceResponse) = PlaceEntity(
+    private fun mapPlaceResponse(response: PlaceResponse) = PlaceEntity(
         id = response.id.orEmpty(),
         name = response.name.orEmpty(),
         city = response.city.orEmpty()
@@ -30,5 +25,5 @@ class PlacesResponseToEntityMapper @Inject constructor(
 
     fun mapPlacesResponseToText(response: Map<String, List<PlaceResponse>>) =
         if (response.isEmpty()) ""
-        else textMapper.mapSelectResult(textMapper.mapCities(response.mapValues { it.value.map(::mapPlaceResponse) }))
+        else textMapper.mapSelectResult(textMapper.mapFavouriteCities(response.mapValues { it.value.map(::mapPlaceResponse) }))
 }

@@ -1,6 +1,5 @@
 package ru.zzemlyanaya.pulsepower.feature.profile.presentation.viewModel
 
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import ru.zzemlyanaya.pulsepower.R
@@ -26,9 +25,15 @@ class UserInfoViewModel @Inject constructor(
     private val router: NavigationRouter
 ) : BaseViewModel<UserInfoContract.UiState, UserInfoContract.Intent>(router) {
 
+    private var oldPlaces = emptyList<String>()
+    private var oldPlacesText = ""
+
     override fun getInitialState() = UserInfoContract.UiState()
 
     init {
+        oldPlaces = userProvider.userEntity.favouritePlacesIds
+        oldPlacesText = userProvider.userEntity.favouritePlacesText
+
         updateDataState { it.copy(
             name = userProvider.userEntity.name,
             surname = userProvider.userEntity.surname,
@@ -47,7 +52,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     private fun onSelectPlaces() {
-        router.addResultListener<List<CityItemUiModel>>(PlaceSelectViewModel.PLACE_SELECT_RESULT) {
+        router.addResultListener<List<CityItemUiModel>>(PlaceSelectViewModel.PLACE_SELECT_RESULT+this.hashCode()) {
             router.removeResultListener(PlaceSelectViewModel.PLACE_SELECT_RESULT)
             handlePlaceSelectResult(it)
         }
@@ -56,7 +61,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     private fun handlePlaceSelectResult(result: List<CityItemUiModel>) {
-       userProvider.userEntity = userProvider.userEntity.copy(
+        userProvider.userEntity = userProvider.userEntity.copy(
             favouritePlacesIds = placesMapper.mapToIds(result),
             favouritePlacesText = placesMapper.mapSelectResult(result)
         )
@@ -66,9 +71,20 @@ class UserInfoViewModel @Inject constructor(
     private fun saveAndBack() {
         ioScope.launch {
             showLoading()
-            interactor.setFavouritePlaces(userProvider.userEntity.favouritePlacesIds)
-            back()
+            val result = interactor.setFavouritePlaces(userProvider.userEntity.favouritePlacesIds)
+            if (result.isSuccessful) {
+                router.back()
+            } else {
+                showError(result.message())
+            }
         }
     }
 
+    override fun back() {
+        userProvider.userEntity = userProvider.userEntity.copy(
+            favouritePlacesIds = oldPlaces,
+            favouritePlacesText = oldPlacesText
+        )
+        super.back()
+    }
 }

@@ -3,8 +3,7 @@ package ru.zzemlyanaya.pulsepower.feature.placeSelect.presentation.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -61,7 +60,12 @@ fun PlaceSelectScreen(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .weight(weight = 1f, fill = false),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
             Toolbar(title = stringResource(id = uiState.title), onBackPressed = { sendIntent(BaseIntent.Back) })
 
             Text(

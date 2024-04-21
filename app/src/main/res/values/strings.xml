@@ -38,6 +38,8 @@
     <string name="choose_up_to_5">Выберите до 5 филиалов</string>
     <string name="choose_at_least_one_error">Выберите хотя бы один филиал</string>
     <string name="favourite_places">Любимые филиалы:</string>
+    <string name="and">и ещё</string>
+    <string name="in_cities">в</string>
 
     <plurals name="place">
         <item quantity="one">%d филиал</item>

@@ -23,15 +23,13 @@ class PlaceSelectViewModel @Inject constructor(
     private val router: NavigationRouter
 ): BaseViewModel<PlaceSelectContract.UiState, PlaceSelectContract.Intent>(router) {
 
-    private val cities = mutableListOf<CityItemUiModel>()
-
     override fun getInitialState() = PlaceSelectContract.UiState()
 
     init {
         ioScope.launch {
             showLoading()
-            cities.addAll(mapper.mapCities(interactor.getAvailablePlaces()))
-            updateCities()
+            val cities = interactor.getAvailablePlaces()
+            updateAndSetDataState { it.copy(cities = mapper.mapCities(cities)) }
         }
     }
 
@@ -44,31 +42,34 @@ class PlaceSelectViewModel @Inject constructor(
     }
 
     private fun onCityClick(city: CityItemUiModel) {
-        cities.find { it.name == city.name }?.apply { isOpen = !this.isOpen }
+        getUiState().cities.find { it.name == city.name }?.apply { isOpen = !this.isOpen }
         updateCities()
     }
 
     private fun onPlaceClick(city: String, placeId: String) {
-        cities.find { it.name == city }
-            ?.places?.forEach {
-                if (it.id == placeId) it.isSelected = !it.isSelected
-                else it.isSelected = false
-            }
+        getUiState().cities
+            .find { it.name == city }?.places
+            ?.find { it.id == placeId }?.apply { isSelected = !isSelected }
         updateCities()
     }
 
     private fun updateCities() {
-        updateAndSetDataState { it.copy(cities = cities, update = !it.update) }
+        updateAndSetDataState { it.copy(update = !it.update) }
     }
 
     override fun back() {
-        val picked = cities.sumOf { city -> city.places.count { it.isSelected } }
+        val picked = getUiState().cities.sumOf { city -> city.places.count { it.isSelected } }
         if (picked == 0 || picked > 5) {
             updateDataState { it.copy(isError = true) }
             return
         }
 
-        router.sendResult(PLACE_SELECT_RESULT, cities.filter { it.hasSelected })
+
+        router.sendResultAll(
+            getUiState().cities
+                .filter { it.hasSelected }
+                .map { city -> city.copy(places = city.places.filter { it.isSelected }) }
+        )
         super.back()
     }
 
