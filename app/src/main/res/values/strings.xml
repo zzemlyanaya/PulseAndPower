@@ -34,7 +34,7 @@
 
     <!-- PLACE SELECT -->
     <string name="place_select_prompt">Tap to choose</string>
-    <string name="places_select">Branch selection</string>
+    <string name="places_select">Branches selection</string>
     <string name="choose_up_to_5">Choose up to 5 branches</string>
     <string name="choose_at_least_one_error">You need to choose at least one branch</string>
     <string name="favourite_places">Favourite branches:</string>
@@ -69,7 +69,7 @@
     <string name="dev_site" translatable="false">https://github.com/GlazProject/Robots</string>
 
     <!-- HISTORY -->
-    <string name="history_title">Все ваши абонементы</string>
+    <string name="history_title">All your memberships</string>
     <string name="individual">Individual</string>
     <string name="group">Group</string>
     <string name="all_inclusive">\"all inclusive\"</string>
@@ -77,9 +77,9 @@
     <string name="morning">morning</string>
     <string name="evening">evening</string>
     <string name="all_day">all day</string>
-    <string name="description_type_1">%s %s занятия</string>
-    <string name="description_type_2">Занятия %s %s</string>
-    <string name="description_type_3">%s занятия %s</string>
+    <string name="description_type_1">%s %s sessions</string>
+    <string name="description_type_2">Sessions %s %s</string>
+    <string name="description_type_3">%s sessions %s</string>
     <string name="for_period">For\ %s</string>
     <string name="until">until %s</string>
 
@@ -97,7 +97,7 @@
 
     <!-- HOME -->
     <string name="hello_world">Hi,\ </string>
-    <string name="current_membership">Your current membership</string>
+    <string name="current_membership">Current membership</string>
     <string name="membership_builder">Membership builder</string>
     <string name="pay_with">Pay with</string>
     <string name="history_short">History</string>
@@ -109,6 +109,6 @@
     <string name="no_membership_3">builder</string>
 
     <string name="payment_loading">Waiting for the bank response</string>
-    <string name="payment_success">All done! You membership is ready to use.</string>
+    <string name="payment_success">All done! Your membership is ready to use.</string>
     <string name="payment_error">Payment error.\nPlease, try again or contact your bank.</string>
 </resources>
