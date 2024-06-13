@@ -1,6 +1,6 @@
 # Pulse&Power
 
-A simplistic and easy to use app for managing one's membership in a gym called «Pulse&Power», done by software duo «Подземелья» ([@zzemlyanaya](https://github.com/zzemlyanaya), [@GlazProject](https://github.com/GlazProject)).
+A simplistic and easy to use app for managing one's membership in a gym called «Pulse&Power», done by duo of software developers «Подземелья» ([@zzemlyanaya](https://github.com/zzemlyanaya), [@GlazProject](https://github.com/GlazProject)).
 > **❗️** The project is done for learning purpose only; this is NOT a real product and neither is the gym. Any resemblance is purely coincidental. Payment functionality is just an imitation and no real banking API calls are made.
 
 This project has backend part! See [this repo](https://github.com/GlazProject/PulseAndPower).
